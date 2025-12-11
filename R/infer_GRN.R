@@ -127,13 +127,14 @@ infer_GRN = function(
   base::setwd(new_folder)
   message("The current working directory has been switched to: ", base::getwd(), ".")
 
+  interest_cell_type_pGRN = base::list()
   if (base::is.null(select_cell_type)) {
     range_cell_type = base::names(interest_cell_type_branch_data_for_GRN_infer)
   } else {
     range_cell_type = select_cell_type
   }
   for (cell_type in range_cell_type) {
-    interest_cell_type_pGRN[[cell_type]] = list()
+    interest_cell_type_pGRN[[cell_type]] = base::list()
     tao = as.numeric(interest_cell_type_tao[cell_type])
 
     if (base::is.null(select_branch)) {

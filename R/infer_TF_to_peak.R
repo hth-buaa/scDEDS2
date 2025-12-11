@@ -92,7 +92,10 @@ infer_TF_to_peak = function(
       interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TF_peaks"]] = base::list()
       for (tf in interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TFs"]]) {
         interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TF_peaks"]][[tf]] = base::list()
-        TGs = data.table::setDT(interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TF_TGs"]])[TF == tf, TG]
+        TGs = base::as.character(interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TF_TGs"]][
+          interest_cell_type_TF_peak_pred[[cell_type]][[level]][["TF_TGs"]]$TF == tf,
+          "TG"
+        ])
         peaks = base::rownames(interest_cell_type_peak_TG_pred[[cell_type]][[level]][["peak_TG"]][
           interest_cell_type_peak_TG_pred[[cell_type]][[level]][["peak_TG"]]$SYMBOL %in% TGs, , drop = FALSE
         ])
