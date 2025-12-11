@@ -1,0 +1,37 @@
+Package: scDEDS
+Title: scDEDS: Pseudotemporal Discrete Evolution Dynamics for GRN Inference from Paired Single-Cell Multi-Omics Data
+Version: 2.0
+Authors@R: 
+    person(given = "Taihang", family = "Huang", email = "huangtaihang@buaa.edu.cn", role = c("aut", "cre"))
+Description: Implements the scDEDS algorithm, a novel method for predicting Gene Regulatory Networks (GRNs) by modeling their discrete evolutionary dynamics along a pseudotemporal trajectory. It is specifically designed for paired single-cell RNA-seq and ATAC-seq data, leveraging the complementary information to infer dynamic regulatory interactions. This package provides a comprehensive toolkit for reconstructing developmental or disease progression pathways from multi-omics snapshots.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    GenomeInfoDb,
+    dplyr,
+    ggplot2,
+    TFBSTools,
+    JASPAR2024,
+    IRanges,
+    ChIPseeker,
+    Signac,
+    SeuratObject,
+    EnsDb.Hsapiens.v86,
+    Biobase,
+    BiocGenerics,
+    methods,
+    monocle,
+    Seurat,
+    VGAM,
+    ggrepel,
+    minpack.lm,
+    Biostrings,
+    data.table,
+    tibble,
+    tidyr,
+    GA,
+    stats,
+    stringr
+    
