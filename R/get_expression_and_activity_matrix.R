@@ -103,11 +103,9 @@ get_expression_and_activity_matrix = function(
 
   message("Adding fragments. Must have both _fragments.tsv.gz and _fragments.tsv.gz.tbi in the current directory.")
   fragment = Signac::CreateFragmentObject(path = path)
-  fragATAC = Signac::Fragments(scATACseq)
-  fragment@cells = fragATAC[[1]]@cells
-  fragATAC[[1]] = fragment
+  fragment@cells = SeuratObject::Cells(scATACseq)
   Signac::Fragments(scATACseq) = NULL
-  Signac::Fragments(scATACseq) = fragATAC
+  Signac::Fragments(scATACseq) = fragment
 
   message("Adding an 'ACTIVITY' matrix to scATAC-seq data in Seurat object.")
   gene.activities = Signac::GeneActivity(scATACseq,
