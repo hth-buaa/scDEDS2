@@ -102,7 +102,7 @@ get_genes_pseudotime_info = function(
     for (i in base::seq_along(Branches)) {
       message("Obtaining gene expression matrices for branch ", i, " (retaining genes/cells with non-zero expression values and keeping genes having zero-value frequencies not exceeding ", alpha_gene, " and cells having zero-value frequencies not exceeding ", alpha_cell, ").")
       Branches_RNA[[i]] = interest_scRNAseq_for_GRN[, base::rownames(Branches[[i]])]
-      for (ii in 1:3) {
+      for (ii in 1:5) {
         Branches_RNA[[i]] = Branches_RNA[[i]][base::rowSums(base::as.matrix(Branches_RNA[[i]]@assays$RNA$counts)) > 0, ]
         Branches_RNA[[i]] = Branches_RNA[[i]][, base::colSums(base::as.matrix(Branches_RNA[[i]]@assays$RNA$counts)) > 0]
         zero_frequency = base::rowMeans(base::as.data.frame(base::as.matrix(SeuratObject::GetAssayData(Branches_RNA[[i]], layer = "counts")) == 0))
@@ -113,6 +113,15 @@ get_genes_pseudotime_info = function(
 
       message("Extracting gene activity matrix for branch ", i," (retaining genes/cells with non-zero activity values).")
       Branches_ATAC[[i]] = interest_scATACseq_for_GRN[base::rownames(Branches_RNA[[i]]), base::colnames(Branches_RNA[[i]])]
+      for (ii in 1:5) {
+        Branches_ATAC[[i]] = Branches_ATAC[[i]][base::rowSums(base::as.matrix(Branches_ATAC[[i]]@assays$ACTIVITY$counts)) > 0, ]
+        Branches_ATAC[[i]] = Branches_ATAC[[i]][, base::colSums(base::as.matrix(Branches_ATAC[[i]]@assays$ACTIVITY$counts)) > 0]
+        zero_frequency = base::rowMeans(base::as.data.frame(base::as.matrix(SeuratObject::GetAssayData(Branches_ATAC[[i]], layer = "counts")) == 0))
+        Branches_ATAC[[i]] = subset(Branches_ATAC[[i]], features = base::names(zero_frequency[zero_frequency <= alpha_gene]))
+        zero_frequency = base::colMeans(base::as.data.frame(base::as.matrix(SeuratObject::GetAssayData(Branches_ATAC[[i]], layer = "counts")) == 0))
+        Branches_ATAC[[i]] = subset(Branches_ATAC[[i]], cells = base::names(zero_frequency[zero_frequency <= alpha_cell]))
+      }
+      Branches_RNA[[i]] = interest_scRNAseq_for_GRN[base::rownames(Branches_ATAC[[i]]), base::colnames(Branches_ATAC[[i]])]
 
       message("Retrieving TGs and TFs for branch ", i, ".")
       Branches_gene_for_GRN[[i]] = base::intersect(interest_gene_for_GRN, base::rownames(Branches_RNA[[i]]))
