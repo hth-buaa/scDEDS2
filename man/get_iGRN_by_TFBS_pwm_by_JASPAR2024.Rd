@@ -5,7 +5,7 @@
 \title{Construct Standard Gene Regulatory Networks (iGRNs) from Transcription Factor Binding Sites (TFBS) Position Weight Matrices PWMs}
 \usage{
 get_iGRN_by_TFBS_pwm_by_JASPAR2024(
-  interest_cell_type_data = interest_cell_type_data,
+  interest_cell_type_genes_pseudotime_info = interest_cell_type_genes_pseudotime_info,
   promoter_range = 50,
   results_identify_TGs = results_identify_TGs,
   genome = BSgenome.Hsapiens.UCSC.hg38,
@@ -18,7 +18,7 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024(
 )
 }
 \arguments{
-\item{interest_cell_type_data}{The output of function get_interest_cell_type_data.}
+\item{interest_cell_type_genes_pseudotime_info}{The output of function get_genes_pseudotime_info}
 
 \item{promoter_range}{See in ?identify_TGs.}
 
@@ -89,7 +89,7 @@ For each cell type, the function:
 
 \examples{
 \dontrun{
-interest_cell_type_data = base::readRDS("./2.1 Data Processing - Pseudotime Analysis And Cell Branching Assignment/interest_cell_type_data.rds")
+interest_cell_type_genes_pseudotime_info = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_genes_pseudotime_info.rds")
 promoter_range = 50
 results_identify_TGs = base::readRDS("./1.1 Data Preprocessing - Identify TGs By Annotation/results_identify_TGs.rds")
 library(BSgenome.Hsapiens.UCSC.hg38)
@@ -97,7 +97,7 @@ min_score_for_matchPWM = "80\%"
 ncores = ceiling(parallel::detectCores() / 2) # in Linux
 # ncores = 1 # in Windows
 interest_cell_type_iGRN_all_TGTF_pairs = get_iGRN_by_TFBS_pwm_by_JASPAR2024(
-  interest_cell_type_data = interest_cell_type_data,
+  interest_cell_type_genes_pseudotime_info = interest_cell_type_genes_pseudotime_info,
   promoter_range = promoter_range,
   results_identify_TGs = results_identify_TGs,
   genome = BSgenome.Hsapiens.UCSC.hg38,

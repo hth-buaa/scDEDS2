@@ -5,7 +5,7 @@
 #' It maps transcription factors (TFs) to target genes (TGs) based on PWM matching scores in promoter regions,
 #' generating TF-TG association matrices for each cell type.
 #'
-#' @param interest_cell_type_data The output of function get_interest_cell_type_data.
+#' @param interest_cell_type_genes_pseudotime_info The output of function get_genes_pseudotime_info
 #' @param promoter_range See in ?identify_TGs.
 #' @param results_identify_TGs The output of function identify_TGs.
 #' @param genome
@@ -65,7 +65,7 @@
 #'
 #' @examples
 #' \dontrun{
-#' interest_cell_type_data = base::readRDS("./2.1 Data Processing - Pseudotime Analysis And Cell Branching Assignment/interest_cell_type_data.rds")
+#' interest_cell_type_genes_pseudotime_info = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_genes_pseudotime_info.rds")
 #' promoter_range = 50
 #' results_identify_TGs = base::readRDS("./1.1 Data Preprocessing - Identify TGs By Annotation/results_identify_TGs.rds")
 #' library(BSgenome.Hsapiens.UCSC.hg38)
@@ -73,7 +73,7 @@
 #' ncores = ceiling(parallel::detectCores() / 2) # in Linux
 #' # ncores = 1 # in Windows
 #' interest_cell_type_iGRN_all_TGTF_pairs = get_iGRN_by_TFBS_pwm_by_JASPAR2024(
-#'   interest_cell_type_data = interest_cell_type_data,
+#'   interest_cell_type_genes_pseudotime_info = interest_cell_type_genes_pseudotime_info,
 #'   promoter_range = promoter_range,
 #'   results_identify_TGs = results_identify_TGs,
 #'   genome = BSgenome.Hsapiens.UCSC.hg38,
@@ -86,7 +86,7 @@
 #' base::saveRDS(interest_cell_type_iGRN_all_TGTF_pairs, file = "./3 get iGRN/interest_cell_type_iGRN_all_TGTF_pairs.rds")
 #' }
 get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
-    interest_cell_type_data = interest_cell_type_data,
+    interest_cell_type_genes_pseudotime_info  = interest_cell_type_genes_pseudotime_info,
     promoter_range = 50,
     results_identify_TGs = results_identify_TGs,
     genome = BSgenome.Hsapiens.UCSC.hg38,
@@ -101,7 +101,8 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
   ### Start.
   t_start = base::Sys.time()
   message("Run: Constructing Standard Gene Regulatory Networks (GRNs) from Transcription Factor Binding Site (TFBS) Position Weight Matrices (PWMs) ", t_start, ".")
-  message("Retrieve known TFs from JASPAR2024 and assume all TFs have potential regulatory relationships with each TG.")
+  # message("Retrieve known TFs from JASPAR2024 and assume all TFs have potential regulatory relationships with each TG.")
+  message("Only considering TFs and TGs that appear in pseudotime analysis.")
   message("Generating a TG-TF association matrix with known TFs filtered by TF-TFBS match strength (rows: TGs, columns: TFs, regulatory strength based on TF-TFBS match scores).")
   original_dir = base::getwd()
   new_folder = "3 get iGRN"
@@ -113,14 +114,18 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
   message("The current working directory has been switched to: ", base::getwd(), ".")
 
   ### Defineing inner function.
-  get_iGRN_by_TFBS_pwm_by_JASPAR2024_process = function(scRNAseq, TGs, promoter_range, peak_anno_promoter,
-                                                        genome = BSgenome.Hsapiens.UCSC.hg38,
-                                                        min_score_for_matchPWM = "80%",
-                                                        ncores = 1,
-                                                        species = "Homo sapiens",
-                                                        collection = c("CORE", "CNE", "PHYLOFACTS", "SPLICE", "POLII",
-                                                                       "FAM", "PBM", "PBM_HOMEO", "PBM_HLH", "UNVALIDATED"),
-                                                        output_predicted_TFBS = FALSE)
+  get_iGRN_by_TFBS_pwm_by_JASPAR2024_process = function(
+    TGs,
+    TFs,
+    promoter_range,
+    peak_anno_promoter,
+    genome = BSgenome.Hsapiens.UCSC.hg38,
+    min_score_for_matchPWM = "80%",
+    ncores = 1,
+    species = "Homo sapiens",
+    collection = c("CORE", "CNE", "PHYLOFACTS", "SPLICE", "POLII",
+                   "FAM", "PBM", "PBM_HOMEO", "PBM_HLH", "UNVALIDATED"),
+    output_predicted_TFBS = FALSE)
   {
     # Constructing TG-Promoter mapping (splitting rows without strand information into two rows: positive strand and negative strand).
     map_from_TGs_to_promoter = function(peak_anno_promoter)
@@ -151,6 +156,7 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
       return(TGs_and_promoter)
     }
     TGs_and_promoter = map_from_TGs_to_promoter(peak_anno_promoter)
+    TGs_and_promoter = TGs_and_promoter[TGs_and_promoter$TGs %in% TGs, , drop = FALSE]
 
     # Defining a function to extract promoter sequences.
     get_promoter_sequence = function(chromosome, start, end, strand,
@@ -158,13 +164,14 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
                                      genome = genome)
     {
       if (strand == 1) {
-        promoter_start = base::max(start - upstream_distance,
-                                   1)
+        promoter_start = base::max(start - upstream_distance, 1)
         promoter_end = start - 1
       } else {
         promoter_start = end + 1
-        promoter_end = base::min(end + upstream_distance,
-                                 GenomeInfoDb::seqlengths(genome)[[base::paste0("chr", chromosome)]])
+        promoter_end = base::min(
+          end + upstream_distance,
+          GenomeInfoDb::seqlengths(genome)[[base::paste0("chr", chromosome)]]
+        )
       }
       promoter_seq =  Biostrings::getSeq(genome, base::paste0("chr", chromosome), promoter_start, promoter_end)
       return(promoter_seq)
@@ -178,9 +185,9 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
                         all_versions = FALSE, matrixtype = "PWM")
     )
 
-    # Retaining only TFGs present in scRNA-seq data.
-    message("Retaining only TFGs present in scRNA-seq data.")
-    pwm@listData = base::Filter(function(x) x@name %in% base::rownames(scRNAseq), pwm@listData)
+    # Retaining only TFs present in pseudotime analysis data.
+    message("Retaining only TFs present in  pseudotime analysis data.")
+    pwm@listData = base::Filter(function(x) x@name %in% TFs, pwm@listData)
 
     # Normalize each column of the position weight matrix to sum to 1 (rows: nucleotide bases, columns: binding site positions, values: base occurrence probabilities, column sum constraint: 1).
     message("Normalize each column of the position weight matrix to sum to 1 (rows: nucleotide bases, columns: binding site positions, values: base occurrence probabilities, column sum constraint: 1).")
@@ -188,24 +195,39 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
       pwm@listData[[i]]@profileMatrix = 2 ^ (pwm@listData[[i]]@profileMatrix) / 4
     }
 
-    # Defining a function to process each PWM and match to TFGs.
+    # Calculating the sequence of each promoter.
+    # Using parallel::mclapply for parallel computing (Only effective on Linux systems).
+    message("Calculating the sequence of each promoter.")
+    message("The number of CPU cores for parallel::mclapply parallel computing is: ", ncores)
+    promoter_seq = base::list()
+    promoter_seq <- parallel::mclapply(1:base::dim(TGs_and_promoter)[1], function(i) {
+      get_promoter_sequence(TGs_and_promoter[i, "chromosome_name"],
+                            TGs_and_promoter[i, "start_position"],
+                            TGs_and_promoter[i, "end_position"],
+                            TGs_and_promoter[i, "strand"],
+                            genome = genome)
+    }, mc.cores = ncores)
+
+    # Processing each PWM and matching to TFGs based on PWM patterns.
+    # Using parallel::mclapply for parallel computing (Only effective on Linux systems).
+    message("Processing each PWM and matching to TFGs based on PWM patterns.")
     message("The minimum score threshold for PWM matching to TFGs is: ", min_score_for_matchPWM)
-    process_pwm = function(name)
-    {
-      results = c()
-      for (i in 1:base::dim(TGs_and_promoter)[1]) {
-        promoter_seq = get_promoter_sequence(TGs_and_promoter[i, "chromosome_name"],
-                                             TGs_and_promoter[i, "start_position"],
-                                             TGs_and_promoter[i, "end_position"],
-                                             TGs_and_promoter[i, "strand"],
-                                             genome = genome)
+    message("The number of CPU cores for parallel::mclapply parallel computing is: ", ncores)
+    results_PWM_match_TF_by_parallel = base::list()
+    length_pwm = base::length(base::names(pwm))
+    for (name in base::names(pwm)) {
+      pos = base::match(name, base::names(pwm))
+      if (pos %% 10 == 1 | pos == length_pwm) {
+        message(pos, "th in ", length_pwm)
+      }
+      results = parallel::mclapply(1:base::dim(TGs_and_promoter)[1], function(i) {
         predicted_TFBS = Biostrings::matchPWM(pwm = pwm[[name]]@profileMatrix,
-                                              subject = promoter_seq,
+                                              subject = promoter_seq[[i]],
                                               min.score = min_score_for_matchPWM,
                                               with.score = TRUE)
         gene_name = TGs_and_promoter$TGs[i]
         if (!base::is.null(predicted_TFBS) &&
-            base::length(gene_name)!= 0 &&
+            base::length(gene_name) != 0 &&
             !base::is.na(mean(predicted_TFBS@elementMetadata@listData[["score"]]))) {
           if (output_predicted_TFBS == T) {
             result_line = base::paste(gene_name,
@@ -220,16 +242,16 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
                                       base::max(predicted_TFBS@elementMetadata@listData[["score"]]),
                                       sep = ",")
           }
-          results = c(results, result_line)
+          return(result_line)
+        } else {
+          return(NULL)
         }
-      }
-      return(results)
+      }, mc.cores = ncores)
+      results = base::unlist(base::Filter(base::Negate(is.null), results))
+
+      results_PWM_match_TF_by_parallel[[name]] = results
     }
 
-    # Using parallel::mclapply for parallel computing (Only effective on Linux systems).
-    message("Processing each PWM and matching to TFGs based on PWM patterns.")
-    message("The number of CPU cores for parallel::mclapply parallel computing is: ", ncores)
-    results_PWM_match_TF_by_parallel = parallel::mclapply(base::names(pwm), process_pwm, mc.cores = ncores)
     message("Saving parallel computation results to 3 get iGRN/results_PWM_match_TF_by_parallel.rds")
     base::saveRDS(results_PWM_match_TF_by_parallel, file = "results_PWM_match_TF_by_parallel.rds")
 
@@ -246,7 +268,8 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
     message("Generating TF-TG association matrix (rows: TGs, columns: TFs, values: match scores normalized by 1.05 times max match score).")
     potential_TFs = data.table::fread("TFBS.csv")
     potential_TFs = potential_TFs[potential_TFs$Predicted_TFBS != "" & !base::is.na(potential_TFs$Predicted_TFBS), ]
-    potential_TFs = potential_TFs[potential_TFs$Potential_TFs %in% base::rownames(scRNAseq), ]
+    # potential_TFs = potential_TFs[potential_TFs$Potential_TFs %in% base::rownames(scRNAseq), ]
+    potential_TFs = potential_TFs[potential_TFs$Potential_TFs %in% TFs, ]
     potential_TFs = potential_TFs[, -c(3)]
     # library(dplyr)
     potential_TFs = potential_TFs %>%
@@ -263,12 +286,18 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
 
   ### Running inner function.
   interest_cell_type_iGRN_all_TGTF_pairs = parallel::mclapply(
-    X = base::names(interest_cell_type_data),
+    X = base::names(interest_cell_type_genes_pseudotime_info),
     FUN = function(cell_type) {
       message("Preparing to construct iGRN for cell type ", cell_type, ".")
       get_iGRN_by_TFBS_pwm_by_JASPAR2024_process(
-        scRNAseq = interest_cell_type_data[[cell_type]][["interest_scRNAseq_for_GRN"]],
-        TGs = interest_cell_type_data[[cell_type]][["interest_TGs"]],
+        TGs = base::sort(base::unique(base::Reduce(
+          base::union,
+          interest_cell_type_genes_pseudotime_info[[cell_type]][["Branches_TGs"]]
+        ))),
+        TFs = base::sort(base::unique(base::Reduce(
+          base::union,
+          interest_cell_type_genes_pseudotime_info[[cell_type]][["Branches_TFs"]]
+        ))),
         promoter_range = promoter_range,
         peak_anno_promoter = results_identify_TGs[["peak_anno_promoter"]],
         genome = genome,
@@ -279,7 +308,7 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
         output_predicted_TFBS = output_predicted_TFBS
       )},
     mc.cores = 1)
-  base::names(interest_cell_type_iGRN_all_TGTF_pairs) = base::names(interest_cell_type_data)
+  base::names(interest_cell_type_iGRN_all_TGTF_pairs) = base::names(interest_cell_type_genes_pseudotime_info)
 
   ### End.
   base::setwd(original_dir)
@@ -290,4 +319,3 @@ get_iGRN_by_TFBS_pwm_by_JASPAR2024 = function(
   base::print(t_end - t_start)
   return(interest_cell_type_iGRN_all_TGTF_pairs)
 }
-
