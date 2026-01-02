@@ -21,9 +21,9 @@ The package incorporates comprehensive transcription factor binding site informa
 
 ### 📊 Multi-Layer Regulatory Inference
 scDEDS provides a hierarchical regulatory network inference capability, predicting relationships at three interconnected levels:
-- **TF → Chromatin Accessibility**: Epigenetic regulation
-- **Chromatin Accessibility → Target Gene**: Accessibility-expression relationships
-- **TF → Target Gene**: Direct regulatory interactions (Summarize the above results)
+- **TF → Chromatin fragments (peaks)**: TF-peak association predictions are obtained based on the motif binding scores of each transcription factor and each chromatin fragment.
+- **Chromatin fragments (peaks) → Target Gene**: Peak-TG association predictions are obtained based on a human-defined promoter region (a base interval that includes the transcription start site, where open chromatin peaks within this interval are considered to have a regulatory relationship with the target gene corresponding to this transcription start site, such as promoters or enhancers).
+- **TF → Target Gene**: One TG corresponds to several peaks. The match scores of transcription factors (TFs) to these peaks are calculated, and the average is taken as the initial regulatory strength of the TF for this TG. This process is performed for each TF and TG to obtain the initial gene regulatory network (iGRN). Typical TF-TG relationship pairs are selected as the training set to train the parameters of the DEDS model. For each TF-TG relationship pair, each set of trained parameters is applied, and the result with the best fit is selected as the predicted regulatory strength for that TF-TG. This process is iterated through for each TF-TG relationship pair to obtain the predicted gene regulatory network (pGRN).
 
 ## Full Workflow
 
