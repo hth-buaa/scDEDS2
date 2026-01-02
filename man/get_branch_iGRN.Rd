@@ -5,13 +5,13 @@
 \title{Extract Branch-Specific Initial Gene Regulatory Networks (iGRNs)}
 \usage{
 get_branch_iGRN(
-  interest_cell_type_iGRN_all_TGTF_pairs = interest_cell_type_iGRN_all_TGTF_pairs,
+  interest_cell_type_iGRN = interest_cell_type_iGRN,
   interest_cell_type_group = interest_cell_type_group,
   ncores = 1
 )
 }
 \arguments{
-\item{interest_cell_type_iGRN_all_TGTF_pairs}{The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.}
+\item{interest_cell_type_iGRN}{The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.}
 
 \item{interest_cell_type_group}{The output of function cell_grouping.}
 
@@ -55,12 +55,12 @@ Important considerations:
 }
 \examples{
 \dontrun{
-interest_cell_type_iGRN_all_TGTF_pairs = base::readRDS("./3 get iGRN/interest_cell_type_iGRN_all_TGTF_pairs.rds")
+interest_cell_type_iGRN = base::readRDS("./3 get iGRN/interest_cell_type_iGRN.rds")
 interest_cell_type_group = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_group.rds")
 ncores = parallel::detectCores() - 1 # in Linux
 # ncores = 1 # in Windows
 interest_cell_type_branch_iGRN = get_branch_iGRN(
-  interest_cell_type_iGRN_all_TGTF_pairs = interest_cell_type_iGRN_all_TGTF_pairs,
+  interest_cell_type_iGRN = interest_cell_type_iGRN,
   interest_cell_type_group = interest_cell_type_group,
   ncores = ncores
 )

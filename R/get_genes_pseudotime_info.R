@@ -202,7 +202,7 @@ get_genes_pseudotime_info = function(
         interest_TGs = interest_cell_type_data[[cell_type]][["interest_TGs"]],
         interest_TFs = interest_cell_type_data[[cell_type]][["interest_TFs"]],
         alpha_gene = alpha_gene,
-        alpha_cell = alpha_gene
+        alpha_cell = alpha_cell
       )
     },
     mc.cores = ncores

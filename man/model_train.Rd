@@ -126,7 +126,7 @@ Important considerations:
 \examples{
 \dontrun{
 interest_cell_type_branch_training_set = base::readRDS("./4.1 Build Prediction Model - Select Training Set/interest_cell_type_branch_training_set.rds")
-interest_cell_type_branch_init_params = base::readRDS()
+interest_cell_type_branch_init_params = base::readRDS("./4.2 BUild Prediction Model/interest_cell_type_branch_init_params.rds")
 interest_cell_type_group = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_group.rds")
 interest_cell_type_tao = base::readRDS("./3 get iGRN/interest_cell_type_tao.rds")
 interest_cell_type_genes_pseudotime_info = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_genes_pseudotime_info.rds")

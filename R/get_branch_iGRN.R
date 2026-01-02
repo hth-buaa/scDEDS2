@@ -4,7 +4,7 @@
 #' This function extracts branch-specific initial gene regulatory networks (iGRNs) from the complete cell-type-specific iGRNs.
 #' It creates subnetworks for each branch within each cell type by filtering the global TF-TG association matrix to include only the TFs and TGs present in each specific branch.
 #'
-#' @param interest_cell_type_iGRN_all_TGTF_pairs The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.
+#' @param interest_cell_type_iGRN The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.
 #' @param interest_cell_type_group The output of function cell_grouping.
 #' @param ncores See in ?get_interest_cell_type_data.
 #'
@@ -44,19 +44,19 @@
 #'
 #' @examples
 #' \dontrun{
-#' interest_cell_type_iGRN_all_TGTF_pairs = base::readRDS("./3 get iGRN/interest_cell_type_iGRN_all_TGTF_pairs.rds")
+#' interest_cell_type_iGRN = base::readRDS("./3 get iGRN/interest_cell_type_iGRN.rds")
 #' interest_cell_type_group = base::readRDS("./2.2 Data Processing - Cell Grouping/interest_cell_type_group.rds")
 #' ncores = parallel::detectCores() - 1 # in Linux
 #' # ncores = 1 # in Windows
 #' interest_cell_type_branch_iGRN = get_branch_iGRN(
-#'   interest_cell_type_iGRN_all_TGTF_pairs = interest_cell_type_iGRN_all_TGTF_pairs,
+#'   interest_cell_type_iGRN = interest_cell_type_iGRN,
 #'   interest_cell_type_group = interest_cell_type_group,
 #'   ncores = ncores
 #' )
 #' base::saveRDS(interest_cell_type_branch_iGRN, file = "./3 get iGRN/interest_cell_type_branch_iGRN.rds")
 #' }
 get_branch_iGRN = function(
-    interest_cell_type_iGRN_all_TGTF_pairs = interest_cell_type_iGRN_all_TGTF_pairs,
+    interest_cell_type_iGRN = interest_cell_type_iGRN,
     interest_cell_type_group = interest_cell_type_group,
     ncores = 1
 )
@@ -74,7 +74,7 @@ get_branch_iGRN = function(
   message("The current working directory has been switched to: ", base::getwd(), ".")
 
   ### Defining inner function.
-  get_branch_iGRN_process = function(cell_type, interest_cell_type_iGRN_all_TGTF_pairs, interest_cell_type_group)
+  get_branch_iGRN_process = function(cell_type, interest_cell_type_iGRN, interest_cell_type_group)
   {
     branch_iGRN = base::list()
     for (n in 1:base::length(interest_cell_type_group[[cell_type]][["n_min"]])) {
@@ -85,9 +85,9 @@ get_branch_iGRN = function(
       base::colnames(branch_iGRN[[n]]) = branch_TFs
       for (TG in branch_TGs) {
         for (TF in branch_TFs) {
-          if (TG %in% base::rownames(interest_cell_type_iGRN_all_TGTF_pairs[[cell_type]]) &&
-              TF %in% base::colnames(interest_cell_type_iGRN_all_TGTF_pairs[[cell_type]])) {
-            branch_iGRN[[n]][TG, TF] = interest_cell_type_iGRN_all_TGTF_pairs[[cell_type]][TG, TF]
+          if (TG %in% base::rownames(interest_cell_type_iGRN[[cell_type]]) &&
+              TF %in% base::colnames(interest_cell_type_iGRN[[cell_type]])) {
+            branch_iGRN[[n]][TG, TF] = interest_cell_type_iGRN[[cell_type]][TG, TF]
           }
         }
       }
@@ -97,18 +97,18 @@ get_branch_iGRN = function(
 
   ### Invoking functions in parallel.
   interest_cell_type_branch_iGRN = parallel::mclapply(
-    X = base::names(interest_cell_type_iGRN_all_TGTF_pairs),
+    X = base::names(interest_cell_type_iGRN),
     FUN = function(cell_type) {
       message("Preparing to extract iGRN for each branch in cell type ", cell_type, ".")
       get_branch_iGRN_process(
         cell_type = cell_type,
-        interest_cell_type_iGRN_all_TGTF_pairs = interest_cell_type_iGRN_all_TGTF_pairs[cell_type],
+        interest_cell_type_iGRN = interest_cell_type_iGRN[cell_type],
         interest_cell_type_group = interest_cell_type_group[cell_type]
       )
     },
     mc.cores = ncores
   )
-  base::names(interest_cell_type_branch_iGRN) = base::names(interest_cell_type_iGRN_all_TGTF_pairs)
+  base::names(interest_cell_type_branch_iGRN) = base::names(interest_cell_type_iGRN)
 
   ### End.
   base::setwd(original_dir)

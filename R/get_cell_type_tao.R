@@ -4,7 +4,7 @@
 #' Computes a cell-type-specific threshold (tao) for binarizing GRN.
 #' The threshold is calculated as the minimum non-zero interaction strength in the iGRN minus a small constant, with a lower bound of 0.005.
 #'
-#' @param interest_cell_type_iGRN_all_TGTF_pairs The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.
+#' @param interest_cell_type_iGRN The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.
 #'
 #' @returns A named numeric vector where names correspond to cell types and values represent the computed binarization thresholds (tao) for each cell type.
 #'
@@ -26,11 +26,11 @@
 #'
 #' @examples
 #' \dontrun{
-#' interest_cell_type_iGRN_all_TGTF_pairs = base::readRDS("./3 get iGRN/interest_cell_type_iGRN_all_TGTF_pairs.rds")
-#' interest_cell_type_tao = get_cell_type_tao(interest_cell_type_iGRN_all_TGTF_pairs)
+#' interest_cell_type_iGRN = base::readRDS("./3 get iGRN/interest_cell_type_iGRN.rds")
+#' interest_cell_type_tao = get_cell_type_tao(interest_cell_type_iGRN)
 #' base::saveRDS(interest_cell_type_tao, file = "./3 get iGRN/interest_cell_type_tao.rds")
 #' }
-get_cell_type_tao = function(interest_cell_type_iGRN_all_TGTF_pairs)
+get_cell_type_tao = function(interest_cell_type_iGRN)
 {
   ### Start.
   t_start = base::Sys.time()
@@ -46,12 +46,12 @@ get_cell_type_tao = function(interest_cell_type_iGRN_all_TGTF_pairs)
 
   ### Process.
   message("Initializing.")
-  interest_cell_type_tao = base::rep(999, base::length(interest_cell_type_iGRN_all_TGTF_pairs))
-  base::names(interest_cell_type_tao) = base::names(interest_cell_type_iGRN_all_TGTF_pairs)
+  interest_cell_type_tao = base::rep(999, base::length(interest_cell_type_iGRN))
+  base::names(interest_cell_type_tao) = base::names(interest_cell_type_iGRN)
   message("Calulating.")
-  for (cell_type in base::names(interest_cell_type_iGRN_all_TGTF_pairs)) {
+  for (cell_type in base::names(interest_cell_type_iGRN)) {
     interest_cell_type_tao[cell_type] = base::max(
-      base::min(interest_cell_type_iGRN_all_TGTF_pairs[[cell_type]][interest_cell_type_iGRN_all_TGTF_pairs[[cell_type]] > 0], na.rm = TRUE) - 0.005,
+      base::min(interest_cell_type_iGRN[[cell_type]][interest_cell_type_iGRN[[cell_type]] > 0], na.rm = TRUE) - 0.005,
       0.005
     )
   }

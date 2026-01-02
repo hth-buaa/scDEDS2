@@ -12,13 +12,17 @@
 #' A TxDb object for genome annotation (e.g., TxDb.Hsapiens.UCSC.hg38.knownGene, TxDb.Hsapiens.UCSC.hg19.knownGene).
 #' Default is TxDb.Hsapiens.UCSC.hg38.knownGene.
 #' @param promoter_range A positive numeric object. Defines the promoter region around TSS (in base pairs). Default is 50 bp.
-#' @param scRNAseq A Seurat object containing scRNA-seq data (the initially loaded data) and gene names as rownames.
-#' @param scATACseq A Seurat object containing scATAC-seq data (the initially loaded data) with files _fragments.tsv.gz.tbi and _fragments.tsv.gz (in Signac framework).
+#' @param scRNAseq
+#' A Seurat object containing scRNA-seq data (the initially loaded data) and gene names as rownames.
+#' The \code{scRNAseq@meta.data} contains the seurat_annotation column, which describes cell labels.
+#' @param scATACseq
+#' A Seurat object containing scATAC-seq data (the initially loaded data) with files _fragments.tsv.gz.tbi and _fragments.tsv.gz (in Signac framework).
+#' The \code{scATACseq@meta.data} contains the seurat_annotation column, which describes cell labels.
 #' @param annoDb "org.Hs.eg.db". Specifies the organism-level annotation package.
 #'
 #' @returns
 #' A list containing two elements:
-#'      peak_anno_promoter: A data frame of annotated peaks.
+#'     peak_anno_promoter: A data frame of annotated peaks.
 #'     TGs: A character vector of unique target gene symbols identified.
 #' @export
 #'
@@ -29,7 +33,7 @@
 #' # scRNAseq = SeuratData::LoadData("pbmcMultiome", "pbmc.rna")
 #' # scATACseq = SeuratData::LoadData("pbmcMultiome", "pbmc.atac")
 #' scRNAseq = base::readRDS("./scRNAseq.rds")
-#  scATACseq = base::readRDS("./scATACseq.rds")
+#' scATACseq = base::readRDS("./scATACseq.rds")
 #' promoter_range = 50
 #' results_identify_TGs = identify_TGs(
 #'   genome_for_anno = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -69,6 +73,7 @@ identify_TGs = function(genome_for_anno = TxDb.Hsapiens.UCSC.hg38.knownGene,
     TxDb = genome_for_anno,
     annoDb = annoDb,
     assignGenomicAnnotation = TRUE,
+    addFlankGeneInfo = TRUE,
     flankDistance = promoter_range,
     sameStrand = FALSE,
     ignoreOverlap = TRUE
@@ -83,7 +88,26 @@ identify_TGs = function(genome_for_anno = TxDb.Hsapiens.UCSC.hg38.knownGene,
 
   ### Obtain TGs.
   message("Save TGs.")
-  peak_anno_promoter = peak_anno %>% dplyr::filter(annotation == "Promoter")
+  peak_anno_promoter = peak_anno[base::grepl("promoter", peak_anno$annotation, ignore.case = TRUE), ]
+  all_tx_ids <- base::unique(base::unlist(base::strsplit(peak_anno_promoter$flank_txIds, ";")))
+  all_tx_ids_clean <- base::sub("\\.[0-9]+$", "", all_tx_ids)
+  tx_to_symbol <- clusterProfiler::bitr(
+    all_tx_ids_clean,
+    fromType = "ENSEMBLTRANS",
+    toType = "SYMBOL",
+    OrgDb = org.Hs.eg.db::org.Hs.eg.db
+  )
+  peak_anno_promoter$flank_geneSymbols = base::sapply(
+    peak_anno_promoter$flank_txIds,
+    function(tx_string) {
+      if (base::is.na(tx_string)) return(NA)
+      tx_list <- base::unlist(base::strsplit(tx_string, ";"))
+      tx_list_clean <- base::sub("\\.[0-9]+$", "", tx_list)
+      symbols <- base::unique(tx_to_symbol$SYMBOL[base::match(tx_list_clean, tx_to_symbol$ENSEMBLTRANS)])
+      symbols <- symbols[!base::is.na(symbols)]
+      base::paste(symbols, collapse = ";")
+    }
+  )
   TGs = base::unique(base::intersect(peak_anno_promoter$SYMBOL, base::rownames(scRNAseq)))
   message(length(TGs), " target genes have been detected, ", base::sum(TGs %in% base::rownames(scRNAseq)), " of which are present in the RNA data.")
   tryCatch(

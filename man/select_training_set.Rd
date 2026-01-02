@@ -12,6 +12,7 @@ select_training_set(
   max_theta_retention_rate_in_all = 1,
   retention_number_of_tops = 1000,
   refine = TRUE,
+  keep_all_TF = TRUE,
   top_ratio_in_refine = 1,
   ncores = 1
 )
@@ -30,6 +31,8 @@ select_training_set(
 \item{retention_number_of_tops}{Positive integer. Number of top theta interactions to retain. Default is 1000.}
 
 \item{refine}{Logical. If TRUE, further refines the training set by requiring mutual top membership (TF in top regulons of TG, and TG in top regulons of TF) and retains a top ratio. Default is TRUE.}
+
+\item{keep_all_TF}{Logical. When \code{refine = TRUE}, if TRUE, ensure that each TF is included in the training set.}
 
 \item{top_ratio_in_refine}{Numeric between 0 and 1. When \code{refine = TRUE}, retains the top proportion of thetas. Default is 1 (100\%).}
 
@@ -57,7 +60,8 @@ The function performs the following key operations:
 \item Generates all possible TF–TG pairs from the iGRN and attaches the regulatory strength (theta_i).
 \item For each TF and each TG, independently selects the top \code{top_n_for_max_theta_in_each_regulon} interactions (by theta_i) to form an initial training set.
 \item Applies three threshold filters to the initial training set: (a) a quantile threshold on the thetas within the training set (\code{max_theta_retention_rate_in_tops}), (b) a quantile threshold on the thetas from all interactions (\code{max_theta_retention_rate_in_all}), and (c) an absolute number threshold (\code{retention_number_of_tops}). The final training set must satisfy all three.
-\item If \code{refine} is TRUE, further refines the training set by keeping only those interactions where the TF appears in the top regulons of the TG and the TG appears in the top regulons of the TF, and then retains the top \code{top_ratio_in_refine} of thetas.
+\item If \code{refine} is TRUE and \code{keep_all_TF} is FALSE, further refines the training set by keeping only those interactions where the TF appears in the top regulons of the TG and the TG appears in the top regulons of the TF, and then retains the top \code{top_ratio_in_refine} of thetas.
+\item If \code{refine} is TRUE and \code{keep_all_TF} is TRUE, retrieve the training set with missing TF on the refined results (theta_i maximum) to ensure that each TF is included in the training set.
 \item For each branch, attaches the corresponding cell group state features (TFE, TGA, TGE) for each time point to the selected interactions.
 \item Returns a list for each cell type, with each element corresponding to a branch (and an "all" element) containing the training set data frame.
 }
@@ -84,6 +88,7 @@ max_theta_retention_rate_in_tops = 0.8
 max_theta_retention_rate_in_all = 0.8
 retention_number_of_tops = 1000
 refine = TRUE
+keep_all_TF = TRUE
 top_ratio_in_refine = 0.8
 ncores = parallel::detectCores() - 1 # in Linux
 # ncores = 1 # in Windows
@@ -95,6 +100,7 @@ interest_cell_type_branch_training_set = select_training_set(
   max_theta_retention_rate_in_all = max_theta_retention_rate_in_all,
   retention_number_of_tops = retention_number_of_tops,
   refine = refine,
+  keep_all_TF = keep_all_TF,
   top_ratio_in_refine = top_ratio_in_refine,
   ncores = ncores
 )

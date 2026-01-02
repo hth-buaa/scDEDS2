@@ -18,9 +18,11 @@ Default is TxDb.Hsapiens.UCSC.hg38.knownGene.}
 
 \item{promoter_range}{A positive numeric object. Defines the promoter region around TSS (in base pairs). Default is 50 bp.}
 
-\item{scRNAseq}{A Seurat object containing scRNA-seq data (the initially loaded data) and gene names as rownames.}
+\item{scRNAseq}{A Seurat object containing scRNA-seq data (the initially loaded data) and gene names as rownames.
+The \code{scRNAseq@meta.data} contains the seurat_annotation column, which describes cell labels.}
 
-\item{scATACseq}{A Seurat object containing scATAC-seq data (the initially loaded data) with files _fragments.tsv.gz.tbi and _fragments.tsv.gz (in Signac framework).}
+\item{scATACseq}{A Seurat object containing scATAC-seq data (the initially loaded data) with files _fragments.tsv.gz.tbi and _fragments.tsv.gz (in Signac framework).
+The \code{scATACseq@meta.data} contains the seurat_annotation column, which describes cell labels.}
 
 \item{annoDb}{"org.Hs.eg.db". Specifies the organism-level annotation package.}
 }
@@ -45,6 +47,7 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 # scRNAseq = SeuratData::LoadData("pbmcMultiome", "pbmc.rna")
 # scATACseq = SeuratData::LoadData("pbmcMultiome", "pbmc.atac")
 scRNAseq = base::readRDS("./scRNAseq.rds")
+scATACseq = base::readRDS("./scATACseq.rds")
 promoter_range = 50
 results_identify_TGs = identify_TGs(
   genome_for_anno = TxDb.Hsapiens.UCSC.hg38.knownGene,

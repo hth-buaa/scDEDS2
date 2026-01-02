@@ -4,10 +4,10 @@
 \alias{get_cell_type_tao}
 \title{Binarization Threshold of GRN for Each Cell Type}
 \usage{
-get_cell_type_tao(interest_cell_type_iGRN_all_TGTF_pairs)
+get_cell_type_tao(interest_cell_type_iGRN)
 }
 \arguments{
-\item{interest_cell_type_iGRN_all_TGTF_pairs}{The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.}
+\item{interest_cell_type_iGRN}{The output of function get_iGRN_by_TFBS_pwm_by_JASPAR2024.}
 }
 \value{
 A named numeric vector where names correspond to cell types and values represent the computed binarization thresholds (tao) for each cell type.
@@ -36,8 +36,8 @@ Important considerations:
 }
 \examples{
 \dontrun{
-interest_cell_type_iGRN_all_TGTF_pairs = base::readRDS("./3 get iGRN/interest_cell_type_iGRN_all_TGTF_pairs.rds")
-interest_cell_type_tao = get_cell_type_tao(interest_cell_type_iGRN_all_TGTF_pairs)
+interest_cell_type_iGRN = base::readRDS("./3 get iGRN/interest_cell_type_iGRN.rds")
+interest_cell_type_tao = get_cell_type_tao(interest_cell_type_iGRN)
 base::saveRDS(interest_cell_type_tao, file = "./3 get iGRN/interest_cell_type_tao.rds")
 }
 }

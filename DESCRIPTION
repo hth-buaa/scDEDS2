@@ -33,5 +33,7 @@ Imports:
     tidyr,
     GA,
     stats,
-    stringr
+    stringr,
+    clusterProfiler,
+    org.Hs.eg.db
     
